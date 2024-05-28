@@ -56,13 +56,9 @@ int listener(int socket) {
 
 int main() {
   onSignal(SIGINT, onInt);
-  int tcpSocket = socket(AF_INET, SOCK_STREAM, 0);
+  int tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (tcpSocket == -1) ER("Failed to open socket");
-  struct sockaddr_in sockerAddress = {
-      .sin_family = AF_INET,
-      .sin_port = PORT,
-  };
-  if (bind(tcpSocket, &sockerAddress, sizeof(sockerAddress)) == -1)
+  if (bind(tcpSocket, &ADDRESS, sizeof(ADDRESS)) == -1)
     ER("Failed to bind socket");
   if (listen(tcpSocket, 42) == -1) ER("Failed to listen socket");
 
