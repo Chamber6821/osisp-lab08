@@ -1,8 +1,10 @@
 #include "onSignal.h"
 #include "utils.h"
+#include <linux/limits.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -10,6 +12,7 @@
 #include <unistd.h>
 
 int work = 1;
+char clientPath[PATH_MAX] = {0};
 
 void onInt(int signal) {
   (void)signal;
@@ -39,6 +42,16 @@ int handleCommand(const char *command) {
            "CD   path      - change current directory\n"
            "LIST           - show file list in current directory\n"
            "QUIT           - quit\n");
+  } else if (startsWith("CD", command) == 0) {
+    if (strcmp("/", tail(command)) == 0) {
+      getcwd(clientPath, sizeof(clientPath));
+    } else {
+      char absolutePath[PATH_MAX], currentPath[PATH_MAX];
+      realpath(tail(command), absolutePath);
+      getcwd(currentPath, sizeof(currentPath));
+      if (startsWith(currentPath, absolutePath))
+        strcpy(clientPath, absolutePath);
+    }
   } else if (startsWith("QUIT", command) == 0) {
     return -1;
   } else {
@@ -49,6 +62,7 @@ int handleCommand(const char *command) {
 
 int runShell(int connection) {
   dup2(connection, STDOUT_FILENO);
+  getcwd(clientPath, sizeof(clientPath));
   while (1) {
     const char prefix[] = "> ";
     write(connection, prefix, sizeof(prefix) - 1);
