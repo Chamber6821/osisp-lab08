@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 int work = 1;
-char clientPath[PATH_MAX] = {0};
+char root[PATH_MAX] = {0};
 
 void onInt(int signal) {
   (void)signal;
@@ -34,7 +34,7 @@ int handleCommand(const char *command) {
     /* nothing */
   } else if (startsWith("ECHO", command)) {
     printf("%s", tail(command));
-  } else if (startsWith("INFO", command) == 0) {
+  } else if (startsWith("INFO", command)) {
     printf("Hello, I am naive server with simple custom shell\n"
            "Command list:\n"
            "ECHO [args...] - print args to console\n"
@@ -42,17 +42,27 @@ int handleCommand(const char *command) {
            "CD   path      - change current directory\n"
            "LIST           - show file list in current directory\n"
            "QUIT           - quit\n");
-  } else if (startsWith("CD", command) == 0) {
-    if (strcmp("/", tail(command)) == 0) {
-      getcwd(clientPath, sizeof(clientPath));
+  } else if (startsWith("CD", command)) {
+    if (startsWith("/", tail(command))) {
+      chdir(root);
     } else {
-      char absolutePath[PATH_MAX], currentPath[PATH_MAX];
-      realpath(tail(command), absolutePath);
-      getcwd(currentPath, sizeof(currentPath));
-      if (startsWith(currentPath, absolutePath))
-        strcpy(clientPath, absolutePath);
+      char copy[strlen(command) + 1];
+      strcpy(copy, tail(command));
+      copy[strlen(copy) - 1] = 0;
+      char absolutePath[PATH_MAX];
+      realpath(copy, absolutePath);
+      printf("Copy: %s\n", copy);
+      printf("Root: %s\n", root);
+      printf("Absl: %s\n", absolutePath);
+      if (startsWith(root, absolutePath)) chdir(absolutePath);
     }
-  } else if (startsWith("QUIT", command) == 0) {
+  } else if (startsWith("LIST", command)) {
+    waitpid(
+        RUN_FORKED(execl("/bin/ls", "ls", "-la", "--color=force", NULL)),
+        NULL,
+        0
+    );
+  } else if (startsWith("QUIT", command)) {
     return -1;
   } else {
     printf("Unknown command: %s", command);
@@ -61,8 +71,8 @@ int handleCommand(const char *command) {
 }
 
 int runShell(int connection) {
-  dup2(connection, STDOUT_FILENO);
-  getcwd(clientPath, sizeof(clientPath));
+  close(STDOUT_FILENO);
+  dup(connection);
   while (1) {
     const char prefix[] = "> ";
     write(connection, prefix, sizeof(prefix) - 1);
@@ -99,6 +109,7 @@ int listener(int socket) {
 
 int main() {
   onSignal(SIGINT, onInt);
+  getcwd(root, sizeof(root));
   int tcpSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (tcpSocket == -1) ER("Failed to open socket");
   if (bind(tcpSocket, &ADDRESS, sizeof(ADDRESS)) == -1)

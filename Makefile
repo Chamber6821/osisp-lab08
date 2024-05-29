@@ -8,7 +8,7 @@ BUILD_DIR = build
 DATA_FILE = $(BUILD_DIR)/data.bin
 
 DEBUG_SUFFIX = $(if $(call eq,$(MODE),debug),-debug)
-CFLAGS = -W -Wall -Wextra -Werror -Wno-strict-prototypes -std=c11 -Isrc/main/ $(if $(call eq,$(MODE),debug),-ggdb) -D_DEFAULT_SOURCE -D_GNU_SOURCE -lm
+CFLAGS = -W -Wall -Wextra -Werror -Wno-strict-prototypes -std=c11 -Isrc/main/ $(if $(call eq,$(MODE),debug),-ggdb) -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_BSD_SOURCE -lm
 CC = gcc $(CFLAGS)
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 GDB = gdb
