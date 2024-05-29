@@ -19,3 +19,12 @@
     perror(msg);                                                               \
     exit(__LINE__);                                                            \
   } while (0);
+
+#define RUN_FORKED(expr)                                                       \
+  ({                                                                           \
+    int childPid = fork();                                                     \
+    if (childPid == 0) {                                                       \
+      exit(expr);                                                              \
+    }                                                                          \
+    childPid;                                                                  \
+  })

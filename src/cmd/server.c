@@ -3,19 +3,11 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-
-#define RUN_FORKED(expr)                                                       \
-  ({                                                                           \
-    int childPid = fork();                                                     \
-    if (childPid == 0) {                                                       \
-      exit(expr);                                                              \
-    }                                                                          \
-    childPid;                                                                  \
-  })
 
 int work = 1;
 
@@ -24,17 +16,36 @@ void onInt(int signal) {
   work = 0;
 }
 
+int handleCommand(const char *command, char *buffer) {
+#define PRINT(...) buffer += sprintf(buffer, __VA_ARGS__)
+  PRINT("Command: \"%s\"\n", command);
+  if (strcmp(command, "HI\n") == 0) {
+    PRINT("Hi!\n");
+    return 0;
+  }
+  if (strcmp(command, "QUIT\n") == 0) {
+    PRINT("Bye-bye\n");
+    return -1;
+  }
+  PRINT("Unknown command: %s", command);
+  return 0;
+}
+
 int runShell(int connection) {
-  if (dup2(connection, STDIN_FILENO) == -1)
-    ER("Failed to redirect connection to stdin");
-  if (dup2(connection, STDOUT_FILENO) == -1)
-    ER("Failed to redirect stdout to connection");
-  if (execl("/bin/sh", "/bin/sh", NULL) == -1) ER("Failed to run /bin/sh");
-  return -1;
+  while (1) {
+    char command[1024] = {0};
+    if (read(connection, command, sizeof(command)) == -1) ER("Failed to read");
+    char output[1024] = {0};
+    if (handleCommand(command, output) == -1) break;
+    write(connection, output, strlen(output));
+  }
+  return 0;
 }
 
 int serve(int connection) {
   waitpid(RUN_FORKED(runShell(connection)), NULL, 0);
+  const char buf[] = "";
+  write(connection, buf, sizeof(buf));
   printf("Close connection: %d\n", connection);
   close(connection);
   return 0;
