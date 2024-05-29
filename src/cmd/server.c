@@ -51,9 +51,6 @@ int handleCommand(const char *command) {
       copy[strlen(copy) - 1] = 0;
       char absolutePath[PATH_MAX];
       realpath(copy, absolutePath);
-      printf("Copy: %s\n", copy);
-      printf("Root: %s\n", root);
-      printf("Absl: %s\n", absolutePath);
       if (startsWith(root, absolutePath)) chdir(absolutePath);
     }
   } else if (startsWith("LIST", command)) {
@@ -64,6 +61,23 @@ int handleCommand(const char *command) {
     );
   } else if (startsWith("QUIT", command)) {
     return -1;
+  } else if (startsWith("@", command)) {
+    char filename[strlen(command) + 1];
+    strcpy(filename, command + 1);
+    filename[strlen(filename) - 1] = 0;
+    FILE *file = fopen(filename, "r");
+    printf("Opened: %s\n", filename);
+    if (file == NULL) {
+      printf("Failed to open file: %s\n", filename);
+    } else {
+      ungetc(fgetc(file), file);
+      while (!feof(file)) {
+        char buffer[1024] = {0};
+        fgets(buffer, sizeof(buffer), file);
+        if (handleCommand(buffer) == -1) break;
+      }
+      fclose(file);
+    }
   } else {
     printf("Unknown command: %s", command);
   }
