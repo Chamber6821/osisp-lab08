@@ -31,8 +31,14 @@ int handleCommand(const char *command) {
     /* nothing */
   } else if (startsWith("ECHO", command)) {
     printf("%s", tail(command));
-  } else if (startsWith("HI", command) == 0) {
-    printf("Hi!\n");
+  } else if (startsWith("INFO", command) == 0) {
+    printf("Hello, I am naive server with simple custom shell\n"
+           "Command list:\n"
+           "ECHO [args...] - print args to console\n"
+           "INFO           - show this page\n"
+           "CD   path      - change current directory\n"
+           "LIST           - show file list in current directory\n"
+           "QUIT           - quit\n");
   } else if (startsWith("QUIT", command) == 0) {
     return -1;
   } else {
