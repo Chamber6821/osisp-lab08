@@ -18,7 +18,6 @@ void onInt(int signal) {
 
 int handleCommand(const char *command, char *buffer) {
 #define PRINT(...) buffer += sprintf(buffer, __VA_ARGS__)
-  PRINT("Command: \"%s\"\n", command);
   if (strcmp(command, "HI\n") == 0) {
     PRINT("Hi!\n");
     return 0;
