@@ -1,0 +1,7 @@
+ECHO dir: ./
+LIST
+CD build
+ECHO dir: build/
+LIST
+CD ..
+
